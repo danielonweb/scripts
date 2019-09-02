@@ -1,0 +1,186 @@
+#!/bin/bash
+
+#////////////////////////////////////////////////////////////////
+# General bash
+#////////////////////////////////////////////////////////////////
+
+alias ls="ls --color"
+alias ll='ls -gaFh --group-directories-first'
+alias l='ls --group-directories-first'
+
+alias sl='sl -le'
+alias less="less -R"
+alias cp='cp -i'
+alias mv='mv -i'
+alias rm='rm -i'
+alias c="clear"
+
+alias sha1='openssl sha1'
+alias df='df -H'
+alias du='du -ch'
+
+alias ..="cd .."
+
+################ GIT ###############
+#git and env. helpers
+export GIT_EDITOR=vim
+
+alias bname='git name-rev --name-only HEAD'
+alias gitrootpath='git rev-parse --show-toplevel'
+alias cdgitroot='cd `git rev-parse --show-toplevel`'
+alias pwdbname='echo `pwd` `bname`'
+alias giteach='git submodule foreach git '
+
+# Protected eclipse project from git
+alias git_clean='git clean -fdx -e ".*project" -e ".settings" -e ".idea" && echo consider deleting .gradle directory as well'
+
+
+########## Auto Complete scripts ########
+# screen auto complete sessions
+complete -C "perl -e '@w=split(/ /,\$ENV{COMP_LINE},-1);\$w=pop(@w);for(qx(screen -ls)){print qq/\$1\n/ if (/^\s*\$w/&&/(\d+\.\w+)/||/\d+\.(\$w\w*)/)}'" screen
+# from http://www.commandlinefu.com/commands/view/12160/bash-auto-complete-your-screen-sessions
+
+#make dir and cd
+function mcd()
+{
+    mkdir $1;
+    cd $1
+}
+
+
+function errno()
+{
+    #DOC MISC: errno 28 - Looks up a specific linux errno number.
+    cat /usr/include/asm-generic/errno-base.h  | grep "[[:space:]]$1[[:space:]]"
+}
+
+function signal()
+{
+    #DOC MISC: signal 7 - Looks up a specific linux signal number
+    cat /usr/include/asm-generic/signal.h  | grep "[[:space:]]$1$"
+
+}
+
+#DOC MISC: outtime - Adds a timestamp to each line of output. Used like ./script.py | outtime
+alias outtime="gawk '{ print strftime(\"[%H:%M:%S]\"), \$0 }'"
+
+#DOC MISC: nodups - filters out duplicate lines (exact same text).
+alias nodups="awk '!x[\$0]++'" # Like uniq, but no need for sorting
+
+function replace()
+{
+    sed "s/$1/$2/"
+}
+
+function hex {
+    #DOC MISC: hex 61234 - Converts a decimal number to hexidecimal.
+    python -c "print hex($1)"
+}
+
+function unhex {
+    #DOC MISC: unhex 0x6fb234/unhex 6fb234 - Converts a hexidecimal number to decimal.
+    echo $1 | grep 0x > /dev/null
+    if [ $? -eq 0 ]
+    then
+        python -c "print $1"
+    else
+        python -c "print 0x$1"
+    fi
+}
+
+function slice()
+{
+    #DOC MISC: slice 2 / slice '-' 4 - Gets the Nth column of lines delimited by ' ' (or the delimiter you give)
+    if [ $# -eq 1 ]
+    then
+        cut -d ' ' -f$1
+    else
+        cut -d $1 -f$2
+    fi
+}
+
+#DOC MISC: trim - Trim whitespace from lines
+alias trim="sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'"
+
+#DOC MISC: witch ALIAS|FUNCTION|FILE - Answers what is this command?
+function witch ()
+{
+    functype=`type -t $1`;
+    case "$functype" in
+        alias)
+            alias $1
+        ;;
+        function)
+            typeset -f $1
+        ;;
+        file)
+            alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde $1;
+            test -t 1 || return 0;
+            echo -en "\033[32mShow file ?\033[0m " 1>&2;
+            read -t 5 answer;
+            if [[ "$answer" == "y" || "$answer" == "Y" || "$answer" == "yes" ]]; then
+                less -# 10 `which $1`;
+            fi
+        ;;
+        *)
+            echo 'Error : wrong name !';
+            echo;
+            echo "Usage: witch ALIAS|FUNCTION|FILE";
+            return 1
+        ;;
+    esac
+}
+
+function print_dir_colors ()
+{
+    eval $(echo "no:global default;fi:normal file;di:directory;ln:symbolic link;pi:named pipe;so:socket;do:door;bd:block device;cd:character device;or:orphan symlink;mi:missing file;su:set uid;sg:set gid;tw:sticky other writable;ow:other writable;st:sticky;ex:executable;"|sed -e 's/:/="/g; s/\;/"\n/g')
+    {         IFS=:     ;   for i in $LS_COLORS     ;   do             echo -e "\e[${i#*=}m$( x=${i%=*}; [ "${!x}" ] && echo "${!x}" || echo "$x" )\e[m" ;   done       ; } | head -n20
+
+}
+
+#DOC INVESTIGATION: cat logs.txt | lmark "xtremapp-reformat done" red - marks keywords with color
+function lmark() {
+    __DESC="Highlight a certain phrase"
+    declare -A fg_color_map
+    fg_color_map[black]='1;30'
+    fg_color_map[red]='1;31'
+    fg_color_map[dred]='0;31'
+    fg_color_map[green]='1;32'
+    fg_color_map[dgreen]='0;32'
+    fg_color_map[yellow]='1;33'
+    fg_color_map[dyellow]='0;33'
+    fg_color_map[blue]='1;34'
+    fg_color_map[dblue]='0;34'
+    fg_color_map[magenta]='1;35'
+    fg_color_map[dmagenta]='0;35'
+    fg_color_map[cyan]='1;36'
+    fg_color_map[dcyan]='0;36'
+
+
+    fg_color_map[r]='1;31'
+    fg_color_map[dr]='0;31'
+    fg_color_map[g]='1;32'
+    fg_color_map[dg]='0;32'
+    fg_color_map[y]='1;33'
+    fg_color_map[dy]='0;33'
+    fg_color_map[b]='1;34'
+    fg_color_map[db]='0;34'
+    fg_color_map[m]='1;35'
+    fg_color_map[dm]='0;35'
+    fg_color_map[c]='1;36'
+    fg_color_map[dc]='1;36'
+
+    pattern=$1
+    shift
+    if [ $# -eq 0 ]
+    then
+        color=${fg_color_map[cyan]}
+    else
+        color=${fg_color_map[$1]}
+        shift
+    fi
+
+    GREP_COLORS='mt='$color egrep --color=yes "$@" "$pattern|"
+}
+
+

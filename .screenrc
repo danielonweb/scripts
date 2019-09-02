@@ -1,0 +1,46 @@
+#Fix for residual editor text
+##When you open a text editor like nano in screen and then close it, the text may stay visible in your terminal. To fix
+#this, #put the following in your ~/.screenrc:
+altscreen on
+
+# Allow bold colors - necessary for some reason
+attrcolor b ".I"
+
+
+# Tell screen how to set colors. AB = background, AF=foreground
+termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
+
+# Enables use of shift-PgUp and shift-PgDn
+termcapinfo xterm|xterms|xs|rxvt ti@:te@
+
+
+# Erase background with current bg color
+defbce "on"
+
+# Enable 256 color term
+# term xterm-256color
+
+
+hardstatus alwayslastline 
+# Very nice tabbed colored hardstatus line
+hardstatus string '%{= Kd} %{= Kd}%-w%{= Kr}[%{= KW}%n %t%{= Kr}]%{= Kd}%+w %-= %{KG} %H%{KW}|%{KY}%101`%{KW}|%D %M %d %Y%{= Kc} %C%A%{-}'
+# hardstatus string "%{+b kr}[ %H ] %{ky} Load: %l %-=%{kb} %c  %d.%m.%Y"
+
+# Hide hardstatus: ctrl-a f 
+bind f eval "hardstatus ignore"
+# Show hardstatus: ctrl-a F
+bind F eval "hardstatus alwayslastline"
+
+# Set scrollback 
+defscrollback 50000
+
+##
+### Informative statusbar
+
+# hardstatus off
+#hardstatus alwayslastline
+# hardstatus string '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B}%m-%d %{W}%c %{g}]'
+#hardstatus alwayslastline '%{= dd}%{= Wr} %D %d %M %c > %{= Ww}%-w%{= Wk}%n %t%{= Ww}%+w %{= dd} %='
+
+
+
