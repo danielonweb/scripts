@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Add LOG type of PS1
+export PS2LOG="$PS1 \D{%F %T}\n\$ " 
+export PS1LOG="\D{%F %T}\n$PS1\n$ "
+export PS1BACK="$PS1"
+
 #////////////////////////////////////////////////////////////////
 # General bash
 #////////////////////////////////////////////////////////////////
@@ -20,25 +25,37 @@ alias df='df -H'
 alias du='du -ch'
 
 alias ..="cd .."
+alias pslog='PS1=$PS1LOG' # ; PS1=$PS1 "\D{%F %T}\n\$ "'
+alias psback='PS1=$PS1BACK'
+
+alias resource='source ~/.bashrc'
 
 ################ GIT ###############
 #git and env. helpers
-export GIT_EDITOR=vim
-
 alias bname='git name-rev --name-only HEAD'
 alias gitrootpath='git rev-parse --show-toplevel'
 alias cdgitroot='cd `git rev-parse --show-toplevel`'
 alias pwdbname='echo `pwd` `bname`'
-alias giteach='git submodule foreach git '
+alias giteach='git submodule foreach '
 
 # Protected eclipse project from git
-alias git_clean='git clean -fdx -e ".*project" -e ".settings" -e ".idea" && echo consider deleting .gradle directory as well'
+alias git_clean='git clean -fdx -e ".*project" -e ".settings" -e ".idea" -e ".vtg" && echo consider deleting .gradle directory as well'
+alias git_clean_foreach='git submodule foreach git clean -fdx -e ".*project" -e ".settings" -e ".idea" -e ".vtg" && echo consider deleting .gradle directory as well'
 
+#///////////////////
+# Super tools
+#///////////////////
+complete -W "$(tldr 2>/dev/null --list)" tldr
+
+########## vd support ########
+alias vd_copy_paste='vncconfig &'
 
 ########## Auto Complete scripts ########
-# screen auto complete sessions
+# screen auto complete sessions 
 complete -C "perl -e '@w=split(/ /,\$ENV{COMP_LINE},-1);\$w=pop(@w);for(qx(screen -ls)){print qq/\$1\n/ if (/^\s*\$w/&&/(\d+\.\w+)/||/\d+\.(\$w\w*)/)}'" screen
 # from http://www.commandlinefu.com/commands/view/12160/bash-auto-complete-your-screen-sessions
+
+
 
 #make dir and cd
 function mcd()
@@ -46,7 +63,6 @@ function mcd()
     mkdir $1;
     cd $1
 }
-
 
 function errno()
 {
@@ -58,7 +74,7 @@ function signal()
 {
     #DOC MISC: signal 7 - Looks up a specific linux signal number
     cat /usr/include/asm-generic/signal.h  | grep "[[:space:]]$1$"
-
+    
 }
 
 #DOC MISC: outtime - Adds a timestamp to each line of output. Used like ./script.py | outtime
@@ -85,7 +101,7 @@ function unhex {
         python -c "print $1"
     else
         python -c "print 0x$1"
-    fi
+    fi   
 }
 
 function slice()
@@ -131,12 +147,72 @@ function witch ()
     esac
 }
 
+#Convert seconds to human readable text
+function convertsecs() {
+    ((h=${1}/3600))
+    ((m=(${1}%3600)/60))
+    ((s=${1}%60))
+    if [[ $h -ne 0 ]]
+    then
+        printf "%d hours " $h
+    fi
+
+    if [[ $m -ne 0 ]]
+    then
+        printf "%d minutes " $m
+    fi
+
+    if [[ $s -ne 0 ]]
+    then
+        printf "%d seconds " $s
+    fi
+    printf "\n"
+}
+
+#DOC MISC: notifyiflong "command" - Notifies (linux ui) when a command finishes if it is a long running one ex: makeprod
+function notifyiflong(){
+    start=$(date +%s)
+    "$@"
+
+    secselapsed=$(($(date +%s) - start))
+    if [ $secselapsed -ge 15 ]
+    then
+        notify-send "\"$(echo $@)\" finished" "and took $(convertsecs $secselapsed)"
+    fi
+}
+
+
+alias sagi='sudo yum install'
+alias acs='yum search'
+
 function print_dir_colors ()
 {
     eval $(echo "no:global default;fi:normal file;di:directory;ln:symbolic link;pi:named pipe;so:socket;do:door;bd:block device;cd:character device;or:orphan symlink;mi:missing file;su:set uid;sg:set gid;tw:sticky other writable;ow:other writable;st:sticky;ex:executable;"|sed -e 's/:/="/g; s/\;/"\n/g')
     {         IFS=:     ;   for i in $LS_COLORS     ;   do             echo -e "\e[${i#*=}m$( x=${i%=*}; [ "${!x}" ] && echo "${!x}" || echo "$x" )\e[m" ;   done       ; } | head -n20
 
 }
+
+
+alias getperms="sudo chmod -R a+rwX ."
+
+#////////////////////////////////////////////////////////////////
+# Log parsing
+#////////////////////////////////////////////////////////////////
+# For faster sort
+export LANG=C
+export LC_COLLAGE=C
+
+alias trsort="sort -k1,1 -S20G --stable"
+alias tnojr="egrep -v 'jr_lock_page|jr_unlock_page|x_key_based_pool_release|send_sync_remote_entries'"
+#DOC INVESTIGATION: lsort - sort logs (give it logs of ram, and sorts on the right columns)
+alias lsort="sed 's/>/> /' | sort -k2,3 -S20G | sed 's/> />/'"
+
+
+#DOC INVESTIGATION: cat logs.txt | lrange - Shows the start and end timestamps of the logs. Useful for seeing if what you are interested in is in this timeframe
+function lrange() {
+    egrep "^<[a-z]+>[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} " | (head -n1 && tail -n1) | cut -c-33
+}
+
 
 #DOC INVESTIGATION: cat logs.txt | lmark "xtremapp-reformat done" red - marks keywords with color
 function lmark() {
@@ -179,8 +255,46 @@ function lmark() {
         color=${fg_color_map[$1]}
         shift
     fi
-
+    
     GREP_COLORS='mt='$color egrep --color=yes "$@" "$pattern|"
 }
 
+## old lcolorless
+alias lqamarker="
+lmark 'PANIC <[A-Z][0-9]+>' red |
+lmark '\\[00000000[0-9a-f]{8}\\] [a-zA-Z0-9_]+\+0x[0-9a-f]+$' red |
+lmark HA_FLOW dblue |
+lmark 'QA\\[[0-9]+\\]' cyan |
+lmark 'whitebox_WB_GB_QA' cyan |
+lmark 'xtremapp-reformat done' yellow |
+lmark 'x_init: XIOS csid (-)?[0-9]+' blue |
+lmark 'DOOMSDAY' magenta |
+lmark '(clos(e|ed|ing)|open(ing)?) gates' red"
+
+alias lerrmark="
+lmark 'fail(?!(over|back))|abort|error|failed' yellow -i |
+lmark 'succeeded|success|finish|done|clear|complete' green -i"
+
+alias lxenvcolor="
+lmark 'xtremapp\*?: [RCDLX]10 ' dred | 
+lmark 'xtremapp\*?: [RCDLX]11 ' dmagenta | 
+lmark 'xtremapp\*?: [RCDLX]12 ' dgreen | 
+lmark 'xtremapp\*?: [RCDLX]13 ' dyellow | 
+lmark 'xtremapp\*?: [RCDLX]14 ' dcyan | 
+lmark 'xtremapp\*?: [RCDLX]15 ' dblue | 
+lmark 'xtremapp\*?: [RCDLX]16 ' green | 
+lmark 'xtremapp\*?: [RCDLX]17 ' yellow | 
+lmark 'xtremapp\*?: M ' dcyan | 
+lmark 'xtremapp-pm\*?: ' dblue | 
+lmark 'kernel' dblue"
+
+alias lnodecolor="
+lmark 'x1-n1' blue |
+lmark 'x1-n2' dblue |
+lmark 'x2-n1' red |
+lmark 'x2-n2' dred |
+lmark 'x3-n1' cyan |
+lmark 'x3-n2' dcyan |
+lmark 'x4-n1' green |
+lmark 'x4-n2' dgreen"
 
