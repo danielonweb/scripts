@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=$PATH:~/scripts/:~scripts/bin
+export PATH=$PATH:~/scripts/:~/scripts/bin
 
 ### scripts repo ###
 [ ! -f ~/scripts/bashrc_common ] && print "~/scripts/ directory is missing"
