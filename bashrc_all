@@ -5,4 +5,5 @@ export PATH=$PATH:~/scripts/:~/scripts/bin
 ### scripts repo ###
 [ ! -f ~/scripts/bashrc_common ] && print "~/scripts/ directory is missing"
 [ -f ~/scripts/bashrc_common ] && . ~/scripts/bashrc_common
+[ -f ~/scripts/bin/z.sh ] && . ~/scripts/bin/z.sh
 
