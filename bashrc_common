@@ -12,6 +12,7 @@ export PS1BACK="$PS1"
 alias ls="ls --color"
 alias ll='ls -gaFh --group-directories-first'
 alias l='ls --group-directories-first'
+alias lsdirs='ls -d */'
 
 alias sl='sl -le'
 alias less="less -R"
