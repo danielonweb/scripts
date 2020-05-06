@@ -25,3 +25,19 @@ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ```
 From (https://github.com/junegunn/fzf#installation)
 
+## Adding Beyond Compare support with WSL/Windows Sub System
+Edit ~/.gitconfig with
+```
+[diff]
+        tool = bc3
+[difftool "bc3"]
+        cmd = "$(wslpath \"c:\\Program Files\\Beyond Compare 4\\BCompare.exe\")" "$(wslpath -aw $LOCAL)" "$(wslpath -aw $REMOTE)"
+[merge]
+        tool = bc3
+[mergetool "bc3"]
+        cmd = "$(wslpath \"c:\\Program Files\\Beyond Compare 4\\BCompare.exe\")" "$(wslpath -aw $LOCAL)" "$(wslpath -aw $REMOTE)" "$(wslpath -aw $BASE)" "$(wslpath -aw $MERGED)"
+        trustExitCode = true
+```
+wslpath is builtin tool for conveting WSL and windows paths
+
+hack taken from - https://www.scootersoftware.com/vbulletin/forum/beyond-compare-4-discussion/version-control-aa/14411-new-updates-in-windows-wsl
