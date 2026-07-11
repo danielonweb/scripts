@@ -24,6 +24,8 @@
 #     * z -l foo  # list matches instead of cd
 #     * z -e foo  # echo the best match, don't cd
 #     * z -c foo  # restrict matches to subdirs of $PWD
+#     * z -x      # remove the current directory from the datafile
+#     * z -h      # show a brief help message
 
 [ -d "${_Z_DATA:-$HOME/.z}" ] && {
     echo "ERROR: z.sh's datafile (${_Z_DATA:-$HOME/.z}) is a directory."
@@ -40,6 +42,8 @@ _z() {
     [ -z "$_Z_OWNER" -a -f "$datafile" -a ! -O "$datafile" ] && return
 
     _z_dirs () {
+        [ -f "$datafile" ] || return
+
         local line
         while read line; do
             # only count directories
@@ -52,19 +56,21 @@ _z() {
     if [ "$1" = "--add" ]; then
         shift
 
-        # $HOME isn't worth matching
-        [ "$*" = "$HOME" ] && return
+        # $HOME and / aren't worth matching
+        [ "$*" = "$HOME" -o "$*" = '/' ] && return
 
         # don't track excluded directory trees
-        local exclude
-        for exclude in "${_Z_EXCLUDE_DIRS[@]}"; do
-            case "$*" in "$exclude*") return;; esac
-        done
+        if [ ${#_Z_EXCLUDE_DIRS[@]} -gt 0 ]; then
+            local exclude
+            for exclude in "${_Z_EXCLUDE_DIRS[@]}"; do
+                case "$*" in "$exclude"*) return;; esac
+            done
+        fi
 
         # maintain the data file
         local tempfile="$datafile.$RANDOM"
         local score=${_Z_MAX_SCORE:-9000}
-        _z_dirs | awk -v path="$*" -v now="$(date +%s)" -v score=$score -F"|" '
+        _z_dirs | \awk -v path="$*" -v now="$(\date +%s)" -v score=$score -F"|" '
             BEGIN {
                 rank[path] = 1
                 time[path] = now
@@ -89,15 +95,15 @@ _z() {
         ' 2>/dev/null >| "$tempfile"
         # do our best to avoid clobbering the datafile in a race condition.
         if [ $? -ne 0 -a -f "$datafile" ]; then
-            env rm -f "$tempfile"
+            \env rm -f "$tempfile"
         else
             [ "$_Z_OWNER" ] && chown $_Z_OWNER:"$(id -ng $_Z_OWNER)" "$tempfile"
-            env mv -f "$tempfile" "$datafile" || env rm -f "$tempfile"
+            \env mv -f "$tempfile" "$datafile" || \env rm -f "$tempfile"
         fi
 
     # tab completion
     elif [ "$1" = "--complete" -a -s "$datafile" ]; then
-        _z_dirs | awk -v q="$2" -F"|" '
+        _z_dirs | \awk -v q="$2" -F"|" '
             BEGIN {
                 q = substr(q, 3)
                 if( q == tolower(q) ) imatch = 1
@@ -122,7 +128,7 @@ _z() {
                     l) list=1;;
                     r) typ="rank";;
                     t) typ="recent";;
-                    x) sed -i -e "\:^${PWD}|.*:d" "$datafile";;
+                    x) \sed -i -e "\:^${PWD}|.*:d" "$datafile";;
                 esac; opt=${opt:1}; done;;
              *) fnd="$fnd${fnd:+ }$1";;
         esac; last=$1; [ "$#" -gt 0 ] && shift; done
@@ -138,26 +144,26 @@ _z() {
         [ -f "$datafile" ] || return
 
         local cd
-        cd="$( < <( _z_dirs ) awk -v t="$(date +%s)" -v list="$list" -v typ="$typ" -v q="$fnd" -F"|" '
+        cd="$( < <( _z_dirs ) \awk -v t="$(\date +%s)" -v list="$list" -v typ="$typ" -v q="$fnd" -F"|" '
             function frecent(rank, time) {
               # relate frequency and time
               dx = t - time
-              return rank * (3.75/((0.0001 * dx + 1) + 0.25))
+              return int(10000 * rank * (3.75/((0.0001 * dx + 1) + 0.25)))
             }
             function output(matches, best_match, common) {
                 # list or return the desired directory
                 if( list ) {
-                    cmd = "sort -g >&2"
+                    if( common ) {
+                        printf "%-10s %s\n", "common:", common > "/dev/stderr"
+                    }
+                    cmd = "sort -n >&2"
                     for( x in matches ) {
                         if( matches[x] ) {
                             printf "%-10s %s\n", matches[x], x | cmd
                         }
                     }
-                    if( common ) {
-                        printf "%-10s %s\n", "common:", common > "/dev/stderr"
-                    }
                 } else {
-                    if( common ) best_match = common
+                    if( common && !typ ) best_match = common
                     print best_match
                 }
             }
@@ -199,15 +205,22 @@ _z() {
                 # prefer case sensitive
                 if( best_match ) {
                     output(matches, best_match, common(matches))
+                    exit
                 } else if( ibest_match ) {
                     output(imatches, ibest_match, common(imatches))
+                    exit
                 }
+                exit(1)
             }
         ')"
 
-        [ $? -eq 0 ] && [ "$cd" ] && {
-          if [ "$echo" ]; then echo "$cd"; else builtin cd "$cd"; fi
-        }
+        if [ "$?" -eq 0 ]; then
+          if [ "$cd" ]; then
+            if [ "$echo" ]; then echo "$cd"; else builtin cd "$cd"; fi
+          fi
+        else
+          return $?
+        fi
     fi
 }
 
@@ -222,10 +235,12 @@ if type compctl >/dev/null 2>&1; then
         if [ "$_Z_NO_RESOLVE_SYMLINKS" ]; then
             _z_precmd() {
                 (_z --add "${PWD:a}" &)
+                : $RANDOM
             }
         else
             _z_precmd() {
                 (_z --add "${PWD:A}" &)
+                : $RANDOM
             }
         fi
         [[ -n "${precmd_functions[(r)_z_precmd]}" ]] || {
