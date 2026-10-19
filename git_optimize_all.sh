@@ -7,7 +7,7 @@ if [ "$1" == "-h" ] ; then
     exit
 fi
 
-if [ -z $1 ] ; then
+if [ -z "$1" ] ; then
     echo "Error: provide root directory for git repo to be optimized"
     exit
 fi
@@ -19,6 +19,6 @@ fi
 
 echo About to execute git_optimize_once.sh on $1 in 5 seconds
 sleep 5s
-find $1 -name .git -type d -execdir ~/trident-developer-tools/git_optimize_once.sh {} ';'
+find "$1" -name .git -type d -execdir ~/scripts/git_optimize_once.sh {} ';'
 
 echo $1 is now optimized for performance
