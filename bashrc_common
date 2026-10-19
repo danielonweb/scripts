@@ -9,6 +9,10 @@ export PS1BACK="$PS1"
 # General bash
 #////////////////////////////////////////////////////////////////
 
+# Compare and sort text byte by byte (fast sort; uppercase sorts first).
+# Only ordering: characters still display using the system locale (UTF-8).
+export LC_COLLATE=C
+
 alias ls="ls --color"
 alias ll='ls -gaFh --group-directories-first'
 alias l='ls --group-directories-first'
