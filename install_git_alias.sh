@@ -1,13 +1,14 @@
-#/bin/bash
+#!/bin/bash
 
 # diff-so-fancy - is beautify the git deault diff tool
 # to use diff-so-fancy you must has ~/scripts/bin in the PATH !
-git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
+git config --global core.pager "diff-so-fancy | less --tabs=4 -RF"
+git config --global interactive.diffFilter "diff-so-fancy --patch"
 
 git config --global alias.graph "log --pretty=format:'%h: %s' --topo-order --graph"
 git config --global alias.ls "diff-tree --no-commit-id --name-only -r"
 git config --global alias.ll "log --pretty=\"format:%Cred%h%Creset %C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset\" --abbrev-commit --date=relative"
-git config --global alias.lll "whatchanged -1"
+git config --global alias.lll "log -1 --raw --no-merges"
 git config --global alias.logl "log --name-status"
 git config --global alias.logg "log --decorate=short --graph"
 git config --global alias.logs "log --format=oneline"
