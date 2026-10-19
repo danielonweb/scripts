@@ -113,7 +113,7 @@ function slice()
 #DOC MISC: trim - Trim whitespace from lines
 alias trim="sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'"
 
-#DOC MISC: witch ALIAS|FUNCTION|FILE - Answers what is this command?
+#DOC MISC: witch ALIAS|FUNCTION|BUILTIN|KEYWORD|FILE - Answers what is this command?
 function witch ()
 {
     functype=`type -t $1`;
@@ -124,19 +124,22 @@ function witch ()
         function)
             typeset -f $1
         ;;
+        builtin|keyword)
+            type "$1"
+        ;;
         file)
-            alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde $1;
+            type -P "$1";
             test -t 1 || return 0;
             echo -en "\033[32mShow file ?\033[0m " 1>&2;
             read -t 5 answer;
             if [[ "$answer" == "y" || "$answer" == "Y" || "$answer" == "yes" ]]; then
-                less -# 10 `which $1`;
+                less -# 10 "$(type -P "$1")";
             fi
         ;;
         *)
             echo 'Error : wrong name !';
             echo;
-            echo "Usage: witch ALIAS|FUNCTION|FILE";
+            echo "Usage: witch ALIAS|FUNCTION|BUILTIN|KEYWORD|FILE";
             return 1
         ;;
     esac
