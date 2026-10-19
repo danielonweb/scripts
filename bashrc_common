@@ -91,18 +91,12 @@ function replace()
 
 function hex {
     #DOC MISC: hex 61234 - Converts a decimal number to hexidecimal.
-    python -c "print hex($1)"
+    printf '0x%x\n' "$1"
 }
 
 function unhex {
     #DOC MISC: unhex 0x6fb234/unhex 6fb234 - Converts a hexidecimal number to decimal.
-    echo $1 | grep 0x > /dev/null
-    if [ $? -eq 0 ]
-    then
-        python -c "print $1"
-    else
-        python -c "print 0x$1"
-    fi   
+    printf '%u\n' "0x${1#0[xX]}"
 }
 
 function slice()
