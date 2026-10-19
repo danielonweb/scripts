@@ -22,7 +22,10 @@ cp ~/scripts/.screenrc ~/
 
 ### Bundled (no install needed)
 - **z** - Directory jumper ([rupa/z](https://github.com/rupa/z/)). Sourced automatically via `bashrc_all`.
-- **diff-so-fancy** - Better git diffs ([so-fancy/diff-so-fancy](https://github.com/so-fancy/diff-so-fancy)). Configured as git pager by `install_git_alias.sh`.
+- **diff-so-fancy** - Better git diffs ([so-fancy/diff-so-fancy](https://github.com/so-fancy/diff-so-fancy)). Configured by `install_git_alias.sh` as the git pager and for `git add -p`.
+  - If diff-so-fancy is also installed system-wide (e.g. `apt install diff-so-fancy`), git uses that copy instead, because `bashrc_all` adds `~/scripts/bin` at the end of `PATH`. The bundled copy is the fallback.
+  - To update it, download the `diff-so-fancy` file attached to the [latest release](https://github.com/so-fancy/diff-so-fancy/releases/latest). Don't use the one from the source code: it needs a `lib/` folder next to it.
+  - To test the bundled copy, even where another one is installed, run this in a repo with uncommitted changes: `git diff --color=always | ~/scripts/bin/diff-so-fancy`
 - **bashrc_common** - Shell aliases, helper functions, and log parsing tools.
 - **git_optimize_all.sh / git_optimize_once.sh** - Git repo optimization scripts.
 

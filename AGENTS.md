@@ -10,7 +10,8 @@
 - Shell aliases/functions: the matching banner section of `bashrc_common`, not `~/.bashrc`.
 - `git <alias>` aliases: `install_git_alias.sh`. Shell aliases that wrap git: GIT section of `bashrc_common`.
 - Document helpers with a `#DOC <CATEGORY>: <usage> - <description>` comment (`MISC` or `INVESTIGATION`). Nothing parses these; it's a convention.
-- `bin/z.sh` (rupa/z) and `bin/diff-so-fancy` are upstream copies: update by replacing, not editing. The installer sets the global git pager to `diff-so-fancy` by name, so it must stay in `~/scripts/bin`.
+- `bin/z.sh` (rupa/z) and `bin/diff-so-fancy` are upstream copies: update by replacing, not editing. For diff-so-fancy, use the `diff-so-fancy` file attached to the GitHub release; the one in its source tree needs a `lib/` folder and fails here.
+- The installer sets `core.pager` and `interactive.diffFilter` to `diff-so-fancy` by name, so it must stay in `~/scripts/bin`. `bashrc_all` appends that folder to `PATH` after `/usr/bin`, so an installed copy (e.g. Ubuntu's `/usr/bin/diff-so-fancy` on the WSL box) wins and the bundled one is only a fallback.
 
 ## Multiple machines
 - Loaded on WSL2 and on other Linux hosts. Guard machine-specific additions, e.g. `[ -d /mnt/c/src ] && alias cdsrc='cd /mnt/c/src'`.
@@ -19,3 +20,4 @@
 ## Verify
 - Syntax: `bash -n bashrc_common bashrc_all` (shellcheck isn't installed).
 - Agent tool shells are non-interactive, so `~/.bashrc` returns early and repo aliases/functions aren't defined there. Test with `bash -ic '<alias-or-function> ...'`; ignore the job-control warnings on stderr.
+- Bundled diff-so-fancy: test it directly with `git diff --color=always | ~/scripts/bin/diff-so-fancy` in a repo with changes; plain `git diff` doesn't run it where another copy is installed.
