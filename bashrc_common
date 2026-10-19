@@ -196,19 +196,19 @@ alias getperms="sudo chmod -R a+rwX ."
 #////////////////////////////////////////////////////////////////
 # Log parsing
 #////////////////////////////////////////////////////////////////
-# For faster sort
-export LANG=C
-export LC_COLLAGE=C
+# The log helpers below run with LC_ALL=C (text as plain bytes), not the shell's
+# locale: sort is 2-3.5x faster than under en_US.UTF-8, and grep doesn't drop
+# lines containing bytes that aren't valid UTF-8 ("binary file matches").
 
-alias trsort="sort -k1,1 -S20G --stable"
-alias tnojr="egrep -v 'jr_lock_page|jr_unlock_page|x_key_based_pool_release|send_sync_remote_entries'"
+alias trsort="LC_ALL=C sort -k1,1 -S20G --stable"
+alias tnojr="LC_ALL=C egrep -v 'jr_lock_page|jr_unlock_page|x_key_based_pool_release|send_sync_remote_entries'"
 #DOC INVESTIGATION: lsort - sort logs (give it logs of ram, and sorts on the right columns)
-alias lsort="sed 's/>/> /' | sort -k2,3 -S20G | sed 's/> />/'"
+alias lsort="LC_ALL=C sed 's/>/> /' | LC_ALL=C sort -k2,3 -S20G | LC_ALL=C sed 's/> />/'"
 
 
 #DOC INVESTIGATION: cat logs.txt | lrange - Shows the start and end timestamps of the logs. Useful for seeing if what you are interested in is in this timeframe
 function lrange() {
-    egrep "^<[a-z]+>[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} " | (head -n1 && tail -n1) | cut -c-33
+    LC_ALL=C egrep "^<[a-z]+>[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} " | (head -n1 && tail -n1) | LC_ALL=C cut -c-33
 }
 
 
@@ -254,7 +254,7 @@ function lmark() {
         shift
     fi
     
-    GREP_COLORS='mt='$color egrep --color=yes "$@" "$pattern|"
+    GREP_COLORS='mt='$color LC_ALL=C egrep --color=yes "$@" "$pattern|"
 }
 
 ## old lcolorless
