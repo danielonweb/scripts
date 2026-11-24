@@ -52,6 +52,29 @@ alias git_clean_foreach='git submodule foreach git clean -fdx -e ".*project" -e 
 #///////////////////
 complete -W "$(tldr 2>/dev/null --list)" tldr
 
+# bat: Debian/Ubuntu install it as batcat, because another package has a bat command
+if ! type -P bat >/dev/null && type -P batcat >/dev/null; then
+    alias bat=batcat
+fi
+
+# fzf: key bindings (CTRL-R history, CTRL-T files, ALT-C cd) and ** fuzzy completion, for
+# fzf from the distribution's packages. fzf's own installer (~/.fzf/install) sets these
+# up in ~/.fzf.bash instead, so skip them there.
+if [[ $- == *i* ]] && [ ! -f ~/.fzf.bash ] && type -P fzf >/dev/null; then
+    if _fzf_init=$(fzf --bash 2>/dev/null </dev/null); then
+        eval "$_fzf_init"   # fzf 0.48 and newer
+    else                    # older fzf (e.g. Ubuntu 24.04's 0.44): Debian/Ubuntu's file locations
+        [ -f /usr/share/doc/fzf/examples/key-bindings.bash ] && . /usr/share/doc/fzf/examples/key-bindings.bash
+        [ -f /usr/share/bash-completion/completions/fzf ] && . /usr/share/bash-completion/completions/fzf
+    fi
+    unset -v _fzf_init
+fi
+
+# oc: short for opencode, unless oc is already a command (e.g. the OpenShift CLI)
+if ! type -P oc >/dev/null; then
+    alias oc=opencode
+fi
+
 ########## vd support ########
 alias vd_copy_paste='vncconfig &'
 

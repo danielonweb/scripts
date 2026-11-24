@@ -102,7 +102,3 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-
-# External tools (cloned/downloaded during install)
-external/*
-!external/.gitkeep
